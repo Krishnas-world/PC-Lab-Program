@@ -1,33 +1,34 @@
-//Write a MPI Program to demonstration of MPI_Send and MPI_Recv.
+#include <mpi.h>
 #include <stdio.h>
-#include <string.h>  
-#include <mpi.h>       
-const int MAX_STRING = 100;
-int main(void)
- {
-    char greeting[MAX_STRING];
-    int comm_sz;                                           // Number of processes
-    int my_rank;                                       // My process rank
-    MPI_Init(NULL, NULL);                    // Initialize MPI
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);   // Get total number of processes                                                          
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);   // Get this process's rank                                                   
-    if (my_rank != 0)  {
-        sprintf(greeting, "Greetings from process %d of %d!", my_rank, comm_sz);
-        MPI_Send(greeting, strlen(greeting) + 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
+int main(int argc, char *argv[])
+{
+    // 1. Initialize the MPI environment. This must be the first MPI call.
+    // The arguments (&argc, &argv) are required for MPI setup.
+    MPI_Init(&argc, &argv);
+    int rank;
+    // 2. Get the rank (ID) of the current process within the communicator
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0)
+    {
+        // Code for Process 0 (The Sender)
+        int number = 42;
+
+        // MPI_Send(data_address, count, datatype, destination_rank, tag, communicator)
+        MPI_Send(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+        printf("Rank 0 sent number %d to Rank 1\n", number);
     }
-else {
-        printf("Greetings from process %d of %d!\n", my_rank, comm_sz);
-        for (int q = 1; q < comm_sz; q++) 
-     {
-            MPI_Recv(greeting, MAX_STRING, MPI_CHAR, q, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            printf("%s\n", greeting);
-        }    }
-    MPI_Finalize();                // Finalize MPI
+    else if (rank == 1)
+    {
+        // Code for Process 1 (The Receiver)
+        int received;
+
+        // MPI_Recv(buffer_address, count, datatype, source_rank, tag, communicator, status)
+        MPI_Recv(&received, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        printf("Rank 1 received number %d from Rank 0\n", received);
+    }
+
+    // 3. Finalize the MPI environment. This must be the last MPI call.
+    MPI_Finalize();
+
     return 0;
 }
-
-
-/* Greetings from process 0 of 4!
-Greetings from process 1 of 4!
-Greetings from process 2 of 4!
-Greetings from process 3 of 4!  */
